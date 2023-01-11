@@ -5,6 +5,7 @@
 
 This project focuses on the optimization of scheduling for train captains at the Taiwan Railways Administration.
 
+- [video link](https://youtu.be/3DNFFizK218)
 
 - File in this project
 ```
