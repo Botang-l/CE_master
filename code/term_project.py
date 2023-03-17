@@ -5,7 +5,7 @@ import re
 
 #建構Model https://www.gurobi.com/documentation/9.5/refman/py_model2.html 
 m = Model()  # Model ( name="", env=defaultEnv )
-
+m.Params.timelimit = 10000.0
 
 #定義車班類別
 class train:
@@ -19,8 +19,8 @@ class train:
 
 
 # 讀取車班資料
-df =pd.read_csv('TRA.csv', sep=",")
-
+df = pd.read_csv('TRA1.csv', sep=",")
+df = df[df['INDEX']<=30]
 
 # 將每個車班資料的類別逐一定義並放進 List 中。
 T = []
@@ -28,15 +28,16 @@ for data in df.iterrows():
     data = data[1]
     T.append(train(data['ID_FROM'],data['ID_TO'],data['TIME_START'],data['TIME_END']))
 
-
+dnum = 10
+inum = 5
 #定義參數
 M = 3000 # 極大值
 OTP = 6.5 # 每分鐘加班費
 CSP = 2100 # 每日花費
 SP = 2 # 準備時間 --> SP = SSP = ESP
 AVT = 400 # 期望平均工時 400 分鐘
-dN = list(range(100)) # 工作班數目 
-iN = list(range(4)) # 乘務最大值
+dN = list(range(dnum)) # 工作班數目 
+iN = list(range(inum)) # 乘務最大值
 tN = list(range(len(T))) # 車數
 
 
@@ -53,13 +54,11 @@ twt = m.addVars(dN, vtype = GRB.CONTINUOUS, name='twt') # 總上班時間
 #更新環境中的變量
 m.update()
 
-
 #m.setObjective()設置目標函數
 obj = 0
 for i in dN:
     obj += OTP * (twt[i]-AVT) + CSP * ad[i]
 m.setObjective(obj , GRB.MINIMIZE) 
-
 
 # m.addConstr()加入限制式
 # constraint_1
@@ -216,12 +215,12 @@ for i in dN:
 
 m.optimize() 
 # 透過屬性varName、x顯示決策變數名字及值
-for v in m.getVars():
+for i, v in enumerate(m.getVars()):
     if (v.varName[0] == 'x') and (v.x == 1):
         keyword = re.findall('\d+',v.varName)
-        print('第', int(keyword[0])+1, '個工作班的第', int(keyword[1])+1, '個乘務之列車資訊 ====>', end= " ")
+        #print('第', int(keyword[0])+1, '個工作班的第', int(keyword[1])+1, '個乘務之列車資訊 ====>', end= " ")
         T[int(keyword[2])].get_value()
-    #print(v.varName, v.x)
+    print(v.varName, v.x)
 # 透過屬性objVal顯示最佳解
 print('Obj: %g' % m.objVal)
 
