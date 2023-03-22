@@ -10,8 +10,16 @@ class train:
         self.ES = ES
         self.ST = ST
         self.ET = ET
+        self.children = None
+    
     def get_value(self):
         print("； 出發站 :", self.SS, "； 到達站 :", self.ES, "； 出發時間 :", self.ST, "； 到達時間 :", self.ET)
+    
+    def record_child(self,number):
+        if self.children == None:
+            self.children = []
+        self.children.append(number)
+    
 
 # 讀取車班資料
 df = pd.read_csv('TRA1.csv', sep=",")
@@ -27,7 +35,7 @@ start_time = time.time()
 objs = []
 train_number = 50
 print('第 1 次迭代')
-x_val, num_of_crewscheduling, obj = optimization(T[:50], limit=True,gap=0.5, dnum=25)
+x_val, num_of_crewscheduling, obj = optimization(T[:30], limit=True,gap=0.5, dnum=15)
 
 print('第 2 次迭代   目前經過時間:',time.time()-start_time)
 x_val, num_of_crewscheduling, obj = optimization(T[:80], param=x_val, number=num_of_crewscheduling, limit=True, use_param=True, reoptimization_number=10, dnum=40, gap=0.5)
