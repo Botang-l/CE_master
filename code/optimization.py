@@ -5,18 +5,30 @@ import numpy as np
 import random
 from optimization import *
 
-def optimization(
+class train:
+    def __init__(self, SS, ES, ST, ET,num, Children = None):
+        self.SS = SS
+        self.ES = ES
+        self.ST = ST
+        self.ET = ET
+        self.num = num
+        self.Children = Children
+        
+    
+    def get_value(self):
+        print("出發站 :", self.SS, "； 到達站 :", self.ES, "； 出發時間 :", self.ST, "； 到達時間 :", self.ET)
+        if self.Children != None:
+            print(self.Children)
+
+def Optimization(
         T,
-        number=0,
-        param=None,
         limit=False,
-        use_param=False,
         time=100000,
         gap=0.02,
         pre_obj=10000000,
         dnum=70,
-        inum=4,
-        reoptimization_number = 10):
+        inum=3,
+        ):
 
     #建構Model https://www.gurobi.com/documentation/9.5/refman/py_model2.html 
     m = Model()  # Model ( name="", env=defaultEnv )
@@ -26,7 +38,7 @@ def optimization(
         #m.setParam('OutputFlag', 0) 
 
     #定義參數
-    rescheduling = 3
+    
     M = 3000 # 極大值
     OTP = 6.5 # 每分鐘加班費
     CSP = 2100 # 每日花費
@@ -189,7 +201,8 @@ def optimization(
 
     # constraint_14
     # 確保每個工作班都會在兩天內從嘉義出發並回到嘉義
-    m.addConstr(es[i] == ad[i]) if(i%2) else m.addConstr(ss[i] == ad[i])
+    for i in dN:
+        m.addConstr(es[i] == ad[i]) if(i%2) else m.addConstr(ss[i] == ad[i])
 
     # constraint_15 and 16
     # 確保車班連續
@@ -205,22 +218,22 @@ def optimization(
 
     # m.addConstr()加入限制式
     # constraint_extra
-    constrain_number = 0
+    # constrain_number = 0
     
-    if(number == 0):
-        print('error')
-    elif(use_param):
-        random_ints = random.sample(range(0, number-rescheduling), reoptimization_number-rescheduling) + list(range(number - rescheduling, number))
-        print(random_ints)
-        for i in dN:
-            for j in iN:
-                for k in tN:       
-                    if ((i < param.shape[0]) and (j < param.shape[1]) and (k < param.shape[2])):
-                        if ((i not in random_ints) and (param[i][j][k] == 1)):
-                            m.addConstr(x[i,j,k] == 1)
-                            constrain_number += 1
+    # if(number == 0):
+    #     print('error')
+    # elif(use_param):
+    #     random_ints = random.sample(range(0, number-rescheduling), reoptimization_number-rescheduling) + list(range(number - rescheduling, number))
+    #     print(random_ints)
+    #     for i in dN:
+    #         for j in iN:
+    #             for k in tN:       
+    #                 if ((i < param.shape[0]) and (j < param.shape[1]) and (k < param.shape[2])):
+    #                     if ((i not in random_ints) and (param[i][j][k] == 1)):
+    #                         m.addConstr(x[i,j,k] == 1)
+    #                         constrain_number += 1
     
-        print('重排的車量數:',constrain_number)
+    #     print('重排的車量數:',constrain_number)
 
            
     m.optimize() 
@@ -239,3 +252,42 @@ def optimization(
     print('Obj: %g' % m.objVal) 
     print('=========================')     
     return(x_val.reshape(dnum, inum, len(T)),number_of_crewscheduling,m.objVal)
+
+
+def Decoder(D, List, ReferenceT):
+    if (D.Children == None):
+        List.append(D)
+    else:
+        for i in D.Children:
+            List.append(ReferenceT[i])
+    return (List)
+
+
+def Scheduling(T, x_val, num_of_crewscheduling,random_number=5,ReferenceT=None):
+    if (ReferenceT == None):
+        ReferenceT = T
+    random_ints = random.sample(range(0, num_of_crewscheduling), random_number)
+    scheduling = []
+    for i in range(x_val.shape[0]):
+        branch = i in random_ints
+        temp = []   
+        for j in range(x_val.shape[1]):
+            for k in range(x_val.shape[2]):
+                if (x_val[i][j][k] == 1): 
+                    if (branch):
+                        scheduling = Decoder(T[k], scheduling, ReferenceT)
+                    else:
+                        if T[k].Children != None:
+                            temp = temp + T[k].Children
+                        else:
+                            temp.append(T[k].num)
+                    break
+        if (not branch):
+            if(temp == []):
+                break
+            else:
+                start = temp[0]
+                end = temp[-1]
+                new_train = train(ReferenceT[start].SS, ReferenceT[end].ES, ReferenceT[start].ST, ReferenceT[end].ET, 0, temp)
+                scheduling.append(new_train)
+    return(list(set(scheduling)))
