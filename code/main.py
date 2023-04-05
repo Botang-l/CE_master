@@ -35,7 +35,7 @@ start_time = time.time()
 objs = []
 train_number = 50
 print('第 1 次迭代')
-x_val, num_of_crewscheduling, obj = optimization(T[:30], limit=True,gap=0.5, dnum=15)
+x_val, num_of_crewscheduling, obj = optimization(T[:50], limit=True,gap=0.5, dnum=15)
 
 print('第 2 次迭代   目前經過時間:',time.time()-start_time)
 x_val, num_of_crewscheduling, obj = optimization(T[:80], param=x_val, number=num_of_crewscheduling, limit=True, use_param=True, reoptimization_number=10, dnum=40, gap=0.5)
@@ -46,10 +46,10 @@ x_val, num_of_crewscheduling, obj = optimization(T, param=x_val, number=num_of_c
 objs.append(obj)
 
 iteration_times = 5
-for i in range(1000):
+for i in range(100):
     print('第' + str(iteration_times) + '次迭代   目前經過時間 :',time.time()-start_time)
     try:
-        x_val, num_of_crewscheduling, obj = optimization(T, param=x_val,number=num_of_crewscheduling, limit=True, use_param=True,pre_obj=obj,reoptimization_number=10,dnum=num_of_crewscheduling+3, gap=0.03, time=600)
+        x_val, num_of_crewscheduling, obj = optimization(T, param=x_val,number=num_of_crewscheduling, limit=True, use_param=True,pre_obj=obj+0.01,reoptimization_number=10,dnum=num_of_crewscheduling+3, gap=0.03, time=600)
     except:
         pass
     objs.append(obj)
